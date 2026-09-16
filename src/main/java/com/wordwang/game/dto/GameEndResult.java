@@ -9,5 +9,6 @@ public record GameEndResult(
         String solutionWord,
         List<PlayerView> winners,
         List<PlayerView> players,
-        List<PlayerAuditView> playerAudits) {
+        List<PlayerAuditView> playerAudits,
+        int maxPossibleScore) {
 }

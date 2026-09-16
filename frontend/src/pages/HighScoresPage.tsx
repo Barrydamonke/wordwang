@@ -26,6 +26,7 @@ export function HighScoresPage() {
               <th>#</th>
               <th>Player</th>
               <th>Score</th>
+              <th>% of Max</th>
               <th>Date</th>
             </tr>
           </thead>
@@ -35,6 +36,7 @@ export function HighScoresPage() {
                 <td>{index + 1}</td>
                 <td>{entry.playerName}</td>
                 <td>{entry.score}</td>
+                <td>{entry.percentOfMaxPossible !== null ? `${entry.percentOfMaxPossible}%` : '—'}</td>
                 <td>{new Date(entry.playedAt).toLocaleDateString()}</td>
               </tr>
             ))}

@@ -3,6 +3,8 @@ package com.wordwang.dictionary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DictionaryServiceTest {
@@ -35,5 +37,20 @@ class DictionaryServiceTest {
             assertThat(word).hasSize(8);
             assertThat(dictionaryService.isValidWord(word)).isTrue();
         }
+    }
+
+    @Test
+    void wordsUsingLettersFindsEveryValidWordWithinTheLetterCounts() {
+        List<String> words = dictionaryService.wordsUsingLetters("TARDIGEN"); // letters of GRADIENT
+
+        assertThat(words).contains("GRADIENT", "RATING", "TRADE", "RAT", "TAG");
+        assertThat(words).allSatisfy(word -> assertThat(word.length()).isGreaterThanOrEqualTo(3));
+        assertThat(words).doesNotContain("GRADIENTS"); // needs a second S not present in the letters
+    }
+
+    @Test
+    void wordsUsingLettersRespectsLetterCounts() {
+        // Only one "T" available, so a word needing two can't be formed even though both letters exist.
+        assertThat(dictionaryService.wordsUsingLetters("TARDIGEN")).doesNotContain("TATTER");
     }
 }

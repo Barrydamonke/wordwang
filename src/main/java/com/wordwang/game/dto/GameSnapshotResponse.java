@@ -16,5 +16,6 @@ public record GameSnapshotResponse(
         Instant endsAt,
         List<PlayerView> players,
         List<String> yourFoundWords,
-        List<PlayerView> winners) {
+        List<PlayerView> winners,
+        int maxPossibleScore) {
 }

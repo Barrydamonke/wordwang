@@ -15,6 +15,7 @@ export interface GameState {
   players: PlayerView[]
   yourFoundWords: string[]
   winners: PlayerView[]
+  maxPossibleScore: number
 }
 
 const initialState: GameState = {
@@ -29,6 +30,7 @@ const initialState: GameState = {
   players: [],
   yourFoundWords: [],
   winners: [],
+  maxPossibleScore: 0,
 }
 
 export function useGameState(gameId: string | undefined, playerId: string | null) {
@@ -55,6 +57,7 @@ export function useGameState(gameId: string | undefined, playerId: string | null
           players: snapshot.players,
           yourFoundWords: snapshot.yourFoundWords,
           winners: snapshot.winners,
+          maxPossibleScore: snapshot.maxPossibleScore,
         })
       })
       .catch((err) => {
@@ -100,6 +103,7 @@ export function useGameState(gameId: string | undefined, playerId: string | null
             solutionWord: event.solutionWord,
             winners: event.winners,
             players: event.players,
+            maxPossibleScore: event.maxPossibleScore,
           }))
           break
       }

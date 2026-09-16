@@ -92,6 +92,10 @@ export function HomePage() {
             Join Game
           </button>
           <div className="home-links-row">
+            <Link to="/highscores" className="link">
+              Leaderboard
+            </Link>
+            <span className="home-links-sep">|</span>
             <Link to="/how-to-play" className="link">
               How to Play
             </Link>

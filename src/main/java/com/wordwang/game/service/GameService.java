@@ -45,12 +45,14 @@ public class GameService {
     private final DictionaryService dictionaryService;
     private final GameCodeGenerator gameCodeGenerator;
     private final GuessValidator guessValidator;
+    private final ScoringService scoringService;
 
     public GameService(DictionaryService dictionaryService, GameCodeGenerator gameCodeGenerator,
-                        GuessValidator guessValidator) {
+                        GuessValidator guessValidator, ScoringService scoringService) {
         this.dictionaryService = dictionaryService;
         this.gameCodeGenerator = gameCodeGenerator;
         this.guessValidator = guessValidator;
+        this.scoringService = scoringService;
     }
 
     public Game createGame(String organiserName) {
@@ -159,8 +161,9 @@ public class GameService {
             List<PlayerView> players = sortedPlayerViews(game);
             List<PlayerView> winners = computeWinners(players);
             List<PlayerAuditView> playerAudits = buildPlayerAudits(game, winners);
-            return Optional.of(new GameEndResult(
-                    game.getId(), game.getCreatedAt(), game.getSolutionWord(), winners, players, playerAudits));
+            int maxPossibleScore = computeMaxPossibleScore(game.getSolutionWord());
+            return Optional.of(new GameEndResult(game.getId(), game.getCreatedAt(), game.getSolutionWord(), winners,
+                    players, playerAudits, maxPossibleScore));
         }
     }
 
@@ -196,6 +199,7 @@ public class GameService {
                     : List.copyOf(player.getFoundWords());
             List<PlayerView> players = sortedPlayerViews(game);
             List<PlayerView> winners = finished ? computeWinners(players) : Collections.emptyList();
+            int maxPossibleScore = finished ? computeMaxPossibleScore(solutionWord) : 0;
             return new GameSnapshotResponse(
                     game.getId(),
                     game.getStatus(),
@@ -206,7 +210,8 @@ public class GameService {
                     game.getEndsAt(),
                     players,
                     yourFoundWords,
-                    winners);
+                    winners,
+                    maxPossibleScore);
         }
     }
 
@@ -239,6 +244,15 @@ public class GameService {
                 return false;
             }
         });
+    }
+
+    private int computeMaxPossibleScore(String solutionWord) {
+        if (solutionWord == null) {
+            return 0;
+        }
+        return dictionaryService.wordsUsingLetters(solutionWord).stream()
+                .mapToInt(word -> scoringService.scoreFor(word.length()))
+                .sum();
     }
 
     private List<PlayerView> computeWinners(List<PlayerView> players) {

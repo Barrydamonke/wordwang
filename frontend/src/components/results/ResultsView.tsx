@@ -10,13 +10,23 @@ interface ResultsViewProps {
   players: PlayerView[]
   meId: string | null
   yourFoundWords: string[]
+  maxPossibleScore: number
 }
 
-export function ResultsView({ solutionWord, winners, players, meId, yourFoundWords }: ResultsViewProps) {
+export function ResultsView({
+  solutionWord,
+  winners,
+  players,
+  meId,
+  yourFoundWords,
+  maxPossibleScore,
+}: ResultsViewProps) {
   const winnerNames = winners.map((w) => w.name).join(' & ')
   const isWinner = meId !== null && winners.some((w) => w.playerId === meId)
   const yourScore = players.find((p) => p.playerId === meId)?.score
   const winningScore = winners[0]?.score
+  const yourPercentOfMax =
+    yourScore !== undefined && maxPossibleScore > 0 ? Math.round((yourScore / maxPossibleScore) * 100) : undefined
 
   useEffect(() => {
     if (isWinner) {
@@ -45,7 +55,20 @@ export function ResultsView({ solutionWord, winners, players, meId, yourFoundWor
 
       {meId && yourScore !== undefined && winningScore !== undefined && (
         <p className="score-summary">
-          Your score: <strong>{yourScore}</strong> · Winning score: <strong>{winningScore}</strong>
+          <span>
+            Your score: <strong>{yourScore}</strong>
+          </span>
+          <span>
+            Winning score: <strong>{winningScore}</strong>
+          </span>
+          <span>
+            Max possible: <strong>{maxPossibleScore}</strong>
+          </span>
+          {yourPercentOfMax !== undefined && (
+            <span>
+              Percent of possible points earned: <strong>{yourPercentOfMax}%</strong>
+            </span>
+          )}
         </p>
       )}
 

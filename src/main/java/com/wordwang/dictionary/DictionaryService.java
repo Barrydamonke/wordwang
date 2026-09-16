@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -21,6 +22,7 @@ public class DictionaryService {
 
     private static final String RESOURCE_PATH = "dictionary/enable1.txt";
     private static final int GAME_WORD_LENGTH = 8;
+    private static final int MIN_SCORING_WORD_LENGTH = 3;
 
     private Set<String> words;
     private List<String> eightLetterWords;
@@ -62,5 +64,13 @@ public class DictionaryService {
     public String randomEightLetterWord() {
         int index = ThreadLocalRandom.current().nextInt(eightLetterWords.size());
         return eightLetterWords.get(index);
+    }
+
+    /** Every dictionary word (3+ letters) that can be spelled using no more of each letter than {@code letters} has. */
+    public List<String> wordsUsingLetters(String letters) {
+        Map<Character, Integer> available = LetterMultiset.counts(letters);
+        return words.stream()
+                .filter(word -> word.length() >= MIN_SCORING_WORD_LENGTH && LetterMultiset.isSubsetOf(word, available))
+                .toList();
     }
 }

@@ -46,6 +46,7 @@ export interface GameSnapshotResponse {
   players: PlayerView[]
   yourFoundWords: string[]
   winners: PlayerView[]
+  maxPossibleScore: number
 }
 
 export interface JoinableGameView {
@@ -58,6 +59,7 @@ export interface HighScoreView {
   playerName: string
   score: number
   playedAt: string
+  percentOfMaxPossible: number | null
 }
 
 export interface PlayerJoinedEvent {
@@ -95,6 +97,7 @@ export interface GameEndedEvent {
   solutionWord: string
   winners: PlayerView[]
   players: PlayerView[]
+  maxPossibleScore: number
 }
 
 export type GameEvent =

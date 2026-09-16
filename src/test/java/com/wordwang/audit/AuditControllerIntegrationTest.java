@@ -54,7 +54,7 @@ class AuditControllerIntegrationTest {
     private void recordGame(String gameId, Instant createdAt) {
         List<PlayerAuditView> playerAudits = List.of(new PlayerAuditView("Alice", true, 20, true, true, null));
         List<PlayerView> players = List.of(new PlayerView(UUID.randomUUID(), "Alice", 20));
-        auditService.recordGame(new GameEndResult(gameId, createdAt, "GRADIENT", players, players, playerAudits));
+        auditService.recordGame(new GameEndResult(gameId, createdAt, "GRADIENT", players, players, playerAudits, 0));
     }
 
     @Test

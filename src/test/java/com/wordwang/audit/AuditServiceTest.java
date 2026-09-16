@@ -38,7 +38,7 @@ class AuditServiceTest {
         List<PlayerView> players = List.of(
                 new PlayerView(UUID.randomUUID(), "Alice", 20),
                 new PlayerView(UUID.randomUUID(), "Bob", 5));
-        return new GameEndResult(gameId, createdAt, "GRADIENT", players.subList(0, 1), players, playerAudits);
+        return new GameEndResult(gameId, createdAt, "GRADIENT", players.subList(0, 1), players, playerAudits, 0);
     }
 
     @Test

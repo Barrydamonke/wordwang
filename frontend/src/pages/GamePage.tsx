@@ -143,6 +143,7 @@ export function GamePage() {
           players={state.players}
           meId={meId}
           yourFoundWords={state.yourFoundWords}
+          maxPossibleScore={state.maxPossibleScore}
         />
       </main>
     )

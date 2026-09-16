@@ -33,7 +33,7 @@ class GameServiceTest {
         DictionaryService dictionaryService = new DictionaryService();
         dictionaryService.loadDictionary();
         gameService = new GameService(dictionaryService, new GameCodeGenerator(),
-                new GuessValidator(dictionaryService, new ScoringService()));
+                new GuessValidator(dictionaryService, new ScoringService()), new ScoringService());
     }
 
     @Test
@@ -185,6 +185,22 @@ class GameServiceTest {
         assertThat(end.winners()).hasSize(1);
         assertThat(end.winners().get(0).name()).isEqualTo("Alice");
         assertThat(game.getStatus()).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void finalizeGameComputesMaxPossibleScoreFromEveryValidWordInTheSolution() {
+        Game game = gameService.createGame("Alice");
+        game.setScrambledWord("TARDIGEN");
+        game.setSolutionWord("GRADIENT");
+        game.setStatus(GameStatus.IN_PROGRESS);
+
+        gameService.submitGuess(game.getId(), game.getOrganiserId(), "rating"); // 10 points
+
+        GameEndResult end = gameService.finalizeGame(game.getId()).orElseThrow();
+
+        // "GRADIENT" itself (20) plus "RATING" (10) plus every other valid word from those letters -
+        // definitely more than what a single player found this round.
+        assertThat(end.maxPossibleScore()).isGreaterThan(10);
     }
 
     @Test

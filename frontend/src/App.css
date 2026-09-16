@@ -599,8 +599,20 @@ input[type='text']:focus {
 }
 
 .score-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 0.6rem;
   color: var(--text-muted);
   margin-top: 0.4rem;
+}
+
+.score-summary span {
+  white-space: nowrap;
+}
+
+.score-summary span:not(:first-child)::before {
+  content: '· ';
 }
 
 .score-summary strong {

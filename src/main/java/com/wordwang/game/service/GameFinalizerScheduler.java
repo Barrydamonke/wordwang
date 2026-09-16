@@ -55,10 +55,11 @@ public class GameFinalizerScheduler {
         scheduledFinalizations.remove(gameId);
         gameService.finalizeGame(gameId).ifPresent(result -> {
             for (PlayerView player : result.players()) {
-                highScoreService.recordScore(player.name(), player.score(), gameId);
+                highScoreService.recordScore(player.name(), player.score(), gameId, result.maxPossibleScore());
             }
             auditService.recordGame(result);
-            GameEndedEvent event = new GameEndedEvent(result.solutionWord(), result.winners(), result.players());
+            GameEndedEvent event = new GameEndedEvent(
+                    result.solutionWord(), result.winners(), result.players(), result.maxPossibleScore());
             messagingTemplate.convertAndSend("/topic/game/" + gameId, event);
         });
     }
