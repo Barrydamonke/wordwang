@@ -1,5 +1,6 @@
 package com.wordwang.game.service;
 
+import com.wordwang.daily.DailyChallengeService;
 import com.wordwang.dictionary.DictionaryService;
 import com.wordwang.dictionary.ScrambleUtil;
 import com.wordwang.game.dto.GameEndResult;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -46,13 +49,16 @@ public class GameService {
     private final GameCodeGenerator gameCodeGenerator;
     private final GuessValidator guessValidator;
     private final ScoringService scoringService;
+    private final DailyChallengeService dailyChallengeService;
 
     public GameService(DictionaryService dictionaryService, GameCodeGenerator gameCodeGenerator,
-                        GuessValidator guessValidator, ScoringService scoringService) {
+                        GuessValidator guessValidator, ScoringService scoringService,
+                        DailyChallengeService dailyChallengeService) {
         this.dictionaryService = dictionaryService;
         this.gameCodeGenerator = gameCodeGenerator;
         this.guessValidator = guessValidator;
         this.scoringService = scoringService;
+        this.dailyChallengeService = dailyChallengeService;
     }
 
     public Game createGame(String organiserName) {
@@ -65,6 +71,23 @@ public class GameService {
         String gameId = gameCodeGenerator.generate(games::containsKey);
         Game game = new Game(gameId, organiser);
         games.put(gameId, game);
+        return game;
+    }
+
+    /**
+     * Same as {@link #createGame} but tags the game as today's (UTC) Daily Wang challenge.
+     * {@code dailyPlayerId} is the requesting browser's persistent daily-challenge identity (may be
+     * null for an unsupported/older client, in which case the once-per-day check is simply skipped
+     * for that request rather than blocking it outright).
+     */
+    public Game createDailyGame(String organiserName, UUID dailyPlayerId, String organiserIp) {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        if (dailyChallengeService.hasCompleted(dailyPlayerId, today)) {
+            throw new IllegalStateException("You've already played today's Daily Wang");
+        }
+        Game game = createGame(organiserName, organiserIp);
+        game.setDailyChallengeDate(today);
+        game.setDailyPlayerId(dailyPlayerId);
         return game;
     }
 
@@ -115,7 +138,9 @@ public class GameService {
             if (game.getStatus() != GameStatus.STARTING) {
                 throw new IllegalStateException("Game " + gameId + " is not starting");
             }
-            String solution = dictionaryService.randomEightLetterWord();
+            String solution = game.getDailyChallengeDate() != null
+                    ? dictionaryService.dailyWord(game.getDailyChallengeDate())
+                    : dictionaryService.randomEightLetterWord();
             game.setSolutionWord(solution);
             game.setScrambledWord(ScrambleUtil.scramble(solution));
             Instant now = Instant.now();
@@ -145,12 +170,17 @@ public class GameService {
         }
     }
 
+    /** Same as {@link #finalizeGame(String, boolean)}, for callers that don't track how the round ended. */
+    public Optional<GameEndResult> finalizeGame(String gameId) {
+        return finalizeGame(gameId, false);
+    }
+
     /**
      * Transitions the game to FINISHED and computes the result, but only the first caller for a
      * given game gets a result back — later calls (e.g. a race between the scheduled end-of-round
      * task and an organiser quitting early) return empty so the game only gets finalized once.
      */
-    public Optional<GameEndResult> finalizeGame(String gameId) {
+    public Optional<GameEndResult> finalizeGame(String gameId, boolean endedByQuit) {
         Game game = requireGame(gameId);
         synchronized (game) {
             if (game.getStatus() == GameStatus.FINISHED) {
@@ -163,7 +193,8 @@ public class GameService {
             List<PlayerAuditView> playerAudits = buildPlayerAudits(game, winners);
             int maxPossibleScore = computeMaxPossibleScore(game.getSolutionWord());
             return Optional.of(new GameEndResult(game.getId(), game.getCreatedAt(), game.getSolutionWord(), winners,
-                    players, playerAudits, maxPossibleScore));
+                    players, playerAudits, maxPossibleScore, game.getDailyChallengeDate(), game.getDailyPlayerId(),
+                    game.getStartedAt(), game.getFinishedAt(), endedByQuit));
         }
     }
 
@@ -211,7 +242,8 @@ public class GameService {
                     players,
                     yourFoundWords,
                     winners,
-                    maxPossibleScore);
+                    maxPossibleScore,
+                    game.getDailyChallengeDate());
         }
     }
 
@@ -270,7 +302,8 @@ public class GameService {
                         player.getScore(),
                         player.hasFound(game.getSolutionWord()),
                         winnerIds.contains(player.getId()),
-                        player.getIpAddress()))
+                        player.getIpAddress(),
+                        player.getFoundWords().stream().sorted().toList()))
                 .toList();
     }
 

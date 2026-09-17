@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,6 +24,8 @@ public class DictionaryService {
     private static final String RESOURCE_PATH = "dictionary/enable1.txt";
     private static final int GAME_WORD_LENGTH = 8;
     private static final int MIN_SCORING_WORD_LENGTH = 3;
+    /** Large prime used to scatter consecutive dates across the word list instead of walking it in order. */
+    private static final long DAILY_WORD_HASH_MULTIPLIER = 999_331L;
 
     private Set<String> words;
     private List<String> eightLetterWords;
@@ -64,6 +67,12 @@ public class DictionaryService {
     public String randomEightLetterWord() {
         int index = ThreadLocalRandom.current().nextInt(eightLetterWords.size());
         return eightLetterWords.get(index);
+    }
+
+    /** Deterministic pick for a given date - same date always yields the same word, for every caller. */
+    public String dailyWord(LocalDate date) {
+        long index = Math.floorMod(date.toEpochDay() * DAILY_WORD_HASH_MULTIPLIER, eightLetterWords.size());
+        return eightLetterWords.get((int) index);
     }
 
     /** Every dictionary word (3+ letters) that can be spelled using no more of each letter than {@code letters} has. */
